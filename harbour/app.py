@@ -29,7 +29,6 @@ def create_app():
     app.url_map.strict_slashes = False
 
     # Load config and logging
-    Consul(app)  # load_config expects consul to be registered
     load_config(app)
     logging.config.dictConfig(
         app.config['HARBOUR_LOGGING']
@@ -100,7 +99,6 @@ def load_config(app):
     Loads configuration in the following order:
         1. config.py
         2. local_config.py (ignore failures)
-        3. consul (ignore failures)
     :param app: flask.Flask application instance
     :return: None
     """
@@ -111,11 +109,6 @@ def load_config(app):
         app.config.from_pyfile('local_config.py')
     except IOError:
         app.logger.warning('Could not load local_config.py')
-    try:
-        app.extensions['consul'].apply_remote_config()
-    except ConsulConnectionError as error:
-        app.logger.warning('Could not apply config from consul: {}'
-                           .format(error))
 if __name__ == '__main__':
     running_app = create_app()
     running_app.run(debug=True, use_reloader=False)
