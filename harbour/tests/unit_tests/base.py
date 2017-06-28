@@ -3,7 +3,7 @@ Base properties for all of the unit tests that are shared between each file
 """
 import testing.postgresql
 
-from flask.ext.testing import TestCase
+from flask_testing import TestCase
 from harbour import app
 
 from harbour.models import db
