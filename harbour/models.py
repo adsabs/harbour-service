@@ -4,25 +4,26 @@ The database is not initiated here, but a pointer is created named db. This is
 to be passed to the app creator within the Flask blueprint.
 """
 
-from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.ext.declarative import declarative_base
 
-db = SQLAlchemy()
+
+Base = declarative_base()
 
 
-class Users(db.Model):
+class Users(Base):
     """
     Users table
     Foreign-key absolute_uid is the primary key of the user in the user
     database microservice.
     """
-    __bind_key__ = 'harbour'
     __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    absolute_uid = db.Column(db.Integer, unique=True, nullable=False)
-    classic_email = db.Column(db.String, default='')
-    classic_mirror = db.Column(db.String, default='')
-    classic_cookie = db.Column(db.String, default='')
-    twopointoh_email = db.Column(db.String, default='')
+    id = Column(Integer, primary_key=True)
+    absolute_uid = Column(Integer, unique=True, nullable=False)
+    classic_email = Column(String, default='')
+    classic_mirror = Column(String, default='')
+    classic_cookie = Column(String, default='')
+    twopointoh_email = Column(String, default='')
 
     def __repr__(self):
         return '<' \

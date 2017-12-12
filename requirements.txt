@@ -1,7 +1,8 @@
-flask
-flask-restful
-Flask-Testing
-flask-discoverer
+git+https://github.com/adsabs/ADSMicroserviceUtils.git@master
+Flask==0.12.2
+Flask-RESTful==0.3.6
+Flask-Testing==0.6.2
+flask-discoverer==0.0.2
 flask-consulate==0.1.2
 Flask-SQLAlchemy==2.1
 Flask-Script==2.0.5

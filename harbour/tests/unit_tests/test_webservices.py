@@ -12,7 +12,7 @@ from moto import mock_s3
 from base import TestBaseDatabase
 from flask import url_for
 from harbour.app import create_app
-from harbour.models import db, Users
+from harbour.models import Users
 from harbour.http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
     CLASSIC_TIMEOUT, CLASSIC_BAD_MIRROR, CLASSIC_NO_COOKIE, \
     CLASSIC_UNKNOWN_ERROR, NO_CLASSIC_ACCOUNT, NO_TWOPOINTOH_LIBRARIES, \
@@ -48,8 +48,9 @@ class TestClassicUser(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # Ask the end point
         url = url_for('classicuser')
@@ -146,8 +147,9 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='other.mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # 1. The user fills in their credentials
         # 2. The user submits their credentials to the end point
@@ -194,8 +196,9 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='other.mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # 1. The user fills in their credentials
         # 2. The user submits their credentials to the end point
@@ -386,8 +389,9 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='before@ads.com',
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # 1. The user fills in their credentials
         # 2. The user submits their credentials to the end point
@@ -427,8 +431,9 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='before@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # 1. The user fills in their credentials
         # 2. The user submits their credentials to the end point
@@ -633,8 +638,9 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('twopointohlibraries', uid=10)
         r = self.client.get(url)
@@ -653,8 +659,9 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user_no_library@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('twopointohlibraries', uid=10)
         r = self.client.get(url)
@@ -675,8 +682,9 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user_no_library@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('twopointohlibraries', uid=10)
         r = self.client.get(url)
@@ -705,8 +713,9 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('twopointohlibraries', uid=10)
         r = self.client.get(url)
@@ -831,8 +840,9 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # Setup S3 storage
         TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
@@ -879,8 +889,9 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # Setup S3 storage
         TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
@@ -924,8 +935,9 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('exporttwopointohlibraries', export='zotero')
         r = self.client.get(url, headers={USER_ID_KEYWORD: user.absolute_uid})
@@ -970,8 +982,9 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # Setup S3 storage
         TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
@@ -1015,8 +1028,9 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         # 2. The database is checked to see if the user exists, and the cookie
         # retrieved
@@ -1050,8 +1064,9 @@ class TestClassicLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('classiclibraries', uid=10)
         r = self.client.get(url)
@@ -1071,8 +1086,9 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         mocked_get.side_effect = Timeout
 
@@ -1094,8 +1110,9 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
         url = url_for('classiclibraries', uid=10)
         with HTTMock(ads_classic_fail):
