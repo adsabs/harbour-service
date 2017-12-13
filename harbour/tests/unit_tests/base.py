@@ -81,4 +81,4 @@ class TestBaseDatabase(TestBase):
         Remove/delete the database and the relevant connections
         """
         self.app.db.session.remove()
-        self.app.db.drop_all()
+        Base.metadata.drop_all(bind=self.app.db.engine)
