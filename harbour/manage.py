@@ -9,7 +9,7 @@ sys.path.append(PROJECT_HOME)
 
 from flask.ext.script import Manager, Command
 from flask.ext.migrate import Migrate, MigrateCommand
-from models import db
+from models import Base
 from harbour.app import create_app
 
 # Load the app with the factory
@@ -27,12 +27,11 @@ class CreateDatabase(Command):
         :return: no return
         """
         with app.app_context():
-            db.create_all()
-            db.session.commit()
+            Base.metadata.create_all(bind=app.db.engine)
 
 
 # Set up the alembic migration
-migrate = Migrate(app, db, compare_type=True)
+migrate = Migrate(app, app.db, compare_type=True)
 
 # Setup the command line arguments using Flask-Script
 manager = Manager(app)
