@@ -2,6 +2,10 @@
 All notable changes to the config fileswill be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.10] - 2017-12-12
+ 
+  * Requirements.txt update and microservice migrated to ADSFlask from adsmutils
+
 ## [1.0.9] - 2016-06-17
 
   * Further config changes due to randomness of deployment

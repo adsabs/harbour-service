@@ -9,9 +9,8 @@ import logging.config
 
 from flask import Flask
 from flask.ext.watchman import Watchman
-from flask.ext.restful import Api
-from flask.ext.discoverer import Discoverer
-from flask.ext.consulate import Consul, ConsulConnectionError
+from flask_restful import Api
+from flask_discoverer import Discoverer
 from views import AuthenticateUserClassic, AuthenticateUserTwoPointOh, \
     AllowedMirrors, ClassicLibraries, ClassicUser, TwoPointOhLibraries, \
     ExportTwoPointOhLibraries

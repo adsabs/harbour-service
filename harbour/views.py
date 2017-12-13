@@ -10,8 +10,8 @@ import traceback
 
 from utils import get_post_data, err
 from flask import current_app, request, send_file
-from flask.ext.restful import Resource
-from flask.ext.discoverer import advertise
+from flask_restful import Resource
+from flask_discoverer import advertise
 from client import client
 from models import Users
 from zipfile import ZipFile
