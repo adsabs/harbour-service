@@ -11,8 +11,7 @@ import unittest
 from moto import mock_s3
 from base import TestBaseDatabase
 from flask import url_for
-from harbour.app import create_app
-from harbour.models import db, Users
+from harbour.models import Users
 from harbour.http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
     CLASSIC_TIMEOUT, CLASSIC_BAD_MIRROR, CLASSIC_NO_COOKIE, \
     CLASSIC_UNKNOWN_ERROR, NO_CLASSIC_ACCOUNT, NO_TWOPOINTOH_LIBRARIES, \
@@ -48,18 +47,19 @@ class TestClassicUser(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # Ask the end point
-        url = url_for('classicuser')
-        r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
+            # Ask the end point
+            url = url_for('classicuser')
+            r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
 
-        # Check we get what we expected
-        self.assertStatus(r, 200)
-        self.assertEqual(r.json['classic_email'], user.classic_email)
-        self.assertEqual(r.json['classic_mirror'], user.classic_mirror)
-        self.assertEqual(r.json['twopointoh_email'], '')
+            # Check we get what we expected
+            self.assertStatus(r, 200)
+            self.assertEqual(r.json['classic_email'], user.classic_email)
+            self.assertEqual(r.json['classic_mirror'], user.classic_mirror)
+            self.assertEqual(r.json['twopointoh_email'], '')
 
     def test_get_a_400_when_the_user_does_not_exist(self):
         """
@@ -146,39 +146,40 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='other.mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # 1. The user fills in their credentials
-        # 2. The user submits their credentials to the end point
-        url = url_for('authenticateuserclassic')
+            # 1. The user fills in their credentials
+            # 2. The user submits their credentials to the end point
+            url = url_for('authenticateuserclassic')
 
-        with HTTMock(ads_classic_200):
-            r = self.client.post(
-                url,
-                data=self.stub_user_data,
-                headers={USER_ID_KEYWORD: 10}
+            with HTTMock(ads_classic_200):
+                r = self.client.post(
+                    url,
+                    data=self.stub_user_data,
+                    headers={USER_ID_KEYWORD: 10}
+                )
+
+            self.assertStatus(r, 200)
+
+            self.assertEqual(
+                r.json['classic_email'],
+                self.stub_user_data['classic_email']
             )
+            self.assertTrue(r.json['classic_authed'])
 
-        self.assertStatus(r, 200)
+            r_user = Users.query.filter(Users.absolute_uid == 10).one()
 
-        self.assertEqual(
-            r.json['classic_email'],
-            self.stub_user_data['classic_email']
-        )
-        self.assertTrue(r.json['classic_authed'])
-
-        r_user = Users.query.filter(Users.absolute_uid == 10).one()
-
-        self.assertEqual(
-            r_user.classic_email,
-            self.stub_user_data['classic_email']
-        )
-        self.assertEqual(
-            r_user.classic_mirror,
-            self.stub_user_data['classic_mirror']
-        )
-        self.assertIsInstance(r_user.classic_cookie, unicode)
+            self.assertEqual(
+                r_user.classic_email,
+                self.stub_user_data['classic_email']
+            )
+            self.assertEqual(
+                r_user.classic_mirror,
+                self.stub_user_data['classic_mirror']
+            )
+            self.assertIsInstance(r_user.classic_cookie, unicode)
 
     def test_user_authentication_fails_when_user_already_exists(self):
         """
@@ -194,29 +195,30 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             classic_cookie='some cookie',
             classic_mirror='other.mirror.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # 1. The user fills in their credentials
-        # 2. The user submits their credentials to the end point
-        url = url_for('authenticateuserclassic')
+            # 1. The user fills in their credentials
+            # 2. The user submits their credentials to the end point
+            url = url_for('authenticateuserclassic')
 
-        possible_failures = [
-            ads_classic_fail,
-            ads_classic_no_cookie,
-            ads_classic_unknown_user,
-            ads_classic_wrong_password
-        ]
-        for fail_response in possible_failures:
-            with HTTMock(fail_response):
-                self.client.post(
-                    url,
-                    data=self.stub_user_data,
-                    headers={USER_ID_KEYWORD: 10}
-                )
+            possible_failures = [
+                ads_classic_fail,
+                ads_classic_no_cookie,
+                ads_classic_unknown_user,
+                ads_classic_wrong_password
+            ]
+            for fail_response in possible_failures:
+                with HTTMock(fail_response):
+                    self.client.post(
+                        url,
+                        data=self.stub_user_data,
+                        headers={USER_ID_KEYWORD: 10}
+                    )
 
-            r_user = Users.query.filter(Users.absolute_uid == 10).one()
-            self.assertEqual(r_user, user)
+                r_user = Users.query.filter(Users.absolute_uid == 10).one()
+                self.assertEqual(r_user, user)
 
     def test_user_authentication_unknown_user(self):
         """
@@ -386,34 +388,35 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='before@ads.com',
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # 1. The user fills in their credentials
-        # 2. The user submits their credentials to the end point
-        url = url_for('authenticateusertwopointoh')
+            # 1. The user fills in their credentials
+            # 2. The user submits their credentials to the end point
+            url = url_for('authenticateusertwopointoh')
 
-        with HTTMock(ads_classic_200):
-            r = self.client.post(
-                url,
-                data=self.stub_user_data_2p0,
-                headers={USER_ID_KEYWORD: 10}
+            with HTTMock(ads_classic_200):
+                r = self.client.post(
+                    url,
+                    data=self.stub_user_data_2p0,
+                    headers={USER_ID_KEYWORD: 10}
+                )
+
+            self.assertStatus(r, 200)
+
+            self.assertEqual(
+                r.json['twopointoh_email'],
+                self.stub_user_data_2p0['twopointoh_email']
             )
+            self.assertTrue(r.json['twopointoh_authed'])
 
-        self.assertStatus(r, 200)
+            r_user = Users.query.filter(Users.absolute_uid == 10).one()
 
-        self.assertEqual(
-            r.json['twopointoh_email'],
-            self.stub_user_data_2p0['twopointoh_email']
-        )
-        self.assertTrue(r.json['twopointoh_authed'])
-
-        r_user = Users.query.filter(Users.absolute_uid == 10).one()
-
-        self.assertEqual(
-            r_user.twopointoh_email,
-            self.stub_user_data_2p0['twopointoh_email']
-        )
+            self.assertEqual(
+                r_user.twopointoh_email,
+                self.stub_user_data_2p0['twopointoh_email']
+            )
 
     def test_user_authentication_fails_when_user_already_exists(self):
         """
@@ -427,28 +430,29 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='before@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # 1. The user fills in their credentials
-        # 2. The user submits their credentials to the end point
-        url = url_for('authenticateusertwopointoh')
+            # 1. The user fills in their credentials
+            # 2. The user submits their credentials to the end point
+            url = url_for('authenticateusertwopointoh')
 
-        possible_failures = [
-            ads_classic_fail,
-            ads_classic_unknown_user,
-            ads_classic_wrong_password
-        ]
-        for fail_response in possible_failures:
-            with HTTMock(fail_response):
-                self.client.post(
-                    url,
-                    data=self.stub_user_data_2p0,
-                    headers={USER_ID_KEYWORD: 10}
-                )
+            possible_failures = [
+                ads_classic_fail,
+                ads_classic_unknown_user,
+                ads_classic_wrong_password
+            ]
+            for fail_response in possible_failures:
+                with HTTMock(fail_response):
+                    self.client.post(
+                        url,
+                        data=self.stub_user_data_2p0,
+                        headers={USER_ID_KEYWORD: 10}
+                    )
 
-            r_user = Users.query.filter(Users.absolute_uid == 10).one()
-            self.assertEqual(r_user.twopointoh_email, 'before@ads.com')
+                r_user = Users.query.filter(Users.absolute_uid == 10).one()
+                self.assertEqual(r_user.twopointoh_email, 'before@ads.com')
 
     def test_user_authentication_unknown_user(self):
         """
@@ -557,14 +561,7 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
         TestADSTwoPointOhLibraries.helper_s3_mock_setup()
 
         # Setup the app
-        app_ = create_app()
-        app_.config['CLASSIC_LOGGING'] = {}
-        app_.config['SQLALCHEMY_BINDS'] = {}
-        app_.config['ADS_CLASSIC_MIRROR_LIST'] = [
-            'mirror.com', 'other.mirror.com'
-        ]
-        app_.config['SQLALCHEMY_BINDS']['harbour'] = \
-            TestBaseDatabase.postgresql_url
+        app_ = super(TestADSTwoPointOhLibraries, self).create_app()
 
         return app_
 
@@ -633,14 +630,15 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('twopointohlibraries', uid=10)
-        r = self.client.get(url)
+            url = url_for('twopointohlibraries', uid=10)
+            r = self.client.get(url)
 
-        self.assertStatus(r, 200)
-        self.assertEqual(r.json['libraries'], stub_get_libraries['libraries'])
+            self.assertStatus(r, 200)
+            self.assertEqual(r.json['libraries'], stub_get_libraries['libraries'])
 
     def test_get_libraries_end_point_when_no_user(self):
         """
@@ -653,14 +651,15 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user_no_library@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('twopointohlibraries', uid=10)
-        r = self.client.get(url)
+            url = url_for('twopointohlibraries', uid=10)
+            r = self.client.get(url)
 
-        self.assertStatus(r, NO_TWOPOINTOH_LIBRARIES['code'])
-        self.assertEqual(r.json['error'], NO_TWOPOINTOH_LIBRARIES['message'])
+            self.assertStatus(r, NO_TWOPOINTOH_LIBRARIES['code'])
+            self.assertEqual(r.json['error'], NO_TWOPOINTOH_LIBRARIES['message'])
 
     def test_get_libraries_end_point_when_no_user_but_is_classic(self):
         """
@@ -675,14 +674,15 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user_no_library@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('twopointohlibraries', uid=10)
-        r = self.client.get(url)
+            url = url_for('twopointohlibraries', uid=10)
+            r = self.client.get(url)
 
-        self.assertStatus(r, NO_TWOPOINTOH_ACCOUNT['code'])
-        self.assertEqual(r.json['error'], NO_TWOPOINTOH_ACCOUNT['message'])
+            self.assertStatus(r, NO_TWOPOINTOH_ACCOUNT['code'])
+            self.assertEqual(r.json['error'], NO_TWOPOINTOH_ACCOUNT['message'])
 
     def test_get_libraries_end_point_when_no_classic_auth(self):
         """
@@ -705,14 +705,15 @@ class TestADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('twopointohlibraries', uid=10)
-        r = self.client.get(url)
+            url = url_for('twopointohlibraries', uid=10)
+            r = self.client.get(url)
 
-        self.assertStatus(r, TWOPOINTOH_AWS_PROBLEM['code'])
-        self.assertEqual(r.json['error'], TWOPOINTOH_AWS_PROBLEM['message'])
+            self.assertStatus(r, TWOPOINTOH_AWS_PROBLEM['code'])
+            self.assertEqual(r.json['error'], TWOPOINTOH_AWS_PROBLEM['message'])
 
     def test_get_libraries_end_point_when_users_have_not_loaded(self):
         """
@@ -804,17 +805,7 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
         TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
 
         # Setup the app
-        app_ = create_app()
-        app_.config['CLASSIC_LOGGING'] = {}
-        app_.config['SQLALCHEMY_BINDS'] = {}
-
-        app_.config['ADS_CLASSIC_MIRROR_LIST'] = [
-            'mirror.com', 'other.mirror.com'
-        ]
-        app_.config['SQLALCHEMY_BINDS']['harbour'] = \
-            TestBaseDatabase.postgresql_url
-        app_.config['HARBOUR_EXPORT_SERVICE_URL'] = 'http://fakeapi.adsabs'
-        app_.config['SQLALCHEMY_DATABASE_URI'] = app_.config['SQLALCHEMY_BINDS']['harbour']
+        app_ = super(TestExportADSTwoPointOhLibraries, self).create_app()
         return app_
 
     @mock_s3
@@ -831,39 +822,40 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # Setup S3 storage
-        TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
+            # Setup S3 storage
+            TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
 
-        url = url_for('exporttwopointohlibraries', export='zotero')
+            url = url_for('exporttwopointohlibraries', export='zotero')
 
-        with HTTMock(export_success):
-            r = self.client.get(
-                url,
-                headers={USER_ID_KEYWORD: user.absolute_uid}
+            with HTTMock(export_success):
+                r = self.client.get(
+                    url,
+                    headers={USER_ID_KEYWORD: user.absolute_uid}
+                )
+
+            self.assertStatus(r, 200)
+            self.assertIn('Content-Disposition', r.headers)
+            self.assertEqual(
+                r.headers['Content-Disposition'],
+                'attachment; filename=user_zotero.zip'
             )
 
-        self.assertStatus(r, 200)
-        self.assertIn('Content-Disposition', r.headers)
-        self.assertEqual(
-            r.headers['Content-Disposition'],
-            'attachment; filename=user_zotero.zip'
-        )
+            zip_file = ZipFile(StringIO(r.get_data()))
+            zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
+            self.assertEqual(
+                zip_content.keys(),
+                ['Name.bib', 'Name2.bib']
+            )
 
-        zip_file = ZipFile(StringIO(r.get_data()))
-        zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
-        self.assertEqual(
-            zip_content.keys(),
-            ['Name.bib', 'Name2.bib']
-        )
+            self.assertIn('tag1, tag2', zip_content['Name.bib'])
+            self.assertIn('notes = {note1, note2}', zip_content['Name.bib'])
 
-        self.assertIn('tag1, tag2', zip_content['Name.bib'])
-        self.assertIn('notes = {note1, note2}', zip_content['Name.bib'])
-
-        self.assertNotIn('tag1', zip_content['Name2.bib'],)
-        self.assertNotIn('notes =', zip_content['Name2.bib'])
+            self.assertNotIn('tag1', zip_content['Name2.bib'],)
+            self.assertNotIn('notes =', zip_content['Name2.bib'])
 
     @mock_s3
     @unittest.skip('Deprecated')
@@ -879,39 +871,40 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # Setup S3 storage
-        TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
+            # Setup S3 storage
+            TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
 
-        url = url_for('exporttwopointohlibraries', export='zotero')
+            url = url_for('exporttwopointohlibraries', export='zotero')
 
-        with HTTMock(export_success_no_keyword):
-            r = self.client.get(
-                url,
-                headers={USER_ID_KEYWORD: user.absolute_uid}
+            with HTTMock(export_success_no_keyword):
+                r = self.client.get(
+                    url,
+                    headers={USER_ID_KEYWORD: user.absolute_uid}
+                )
+
+            self.assertStatus(r, 200)
+            self.assertIn('Content-Disposition', r.headers)
+            self.assertEqual(
+                r.headers['Content-Disposition'],
+                'attachment; filename=user_zotero.zip'
             )
 
-        self.assertStatus(r, 200)
-        self.assertIn('Content-Disposition', r.headers)
-        self.assertEqual(
-            r.headers['Content-Disposition'],
-            'attachment; filename=user_zotero.zip'
-        )
+            zip_file = ZipFile(StringIO(r.get_data()))
+            zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
+            self.assertEqual(
+                zip_content.keys(),
+                ['Name.bib', 'Name2.bib']
+            )
 
-        zip_file = ZipFile(StringIO(r.get_data()))
-        zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
-        self.assertEqual(
-            zip_content.keys(),
-            ['Name.bib', 'Name2.bib']
-        )
+            self.assertIn('keywords = {tag1, tag2}', zip_content['Name.bib'],)
+            self.assertIn('notes = {note1, note2}', zip_content['Name.bib'])
 
-        self.assertIn('keywords = {tag1, tag2}', zip_content['Name.bib'],)
-        self.assertIn('notes = {note1, note2}', zip_content['Name.bib'])
-
-        self.assertNotIn('tag1', zip_content['Name2.bib'],)
-        self.assertNotIn('notes =', zip_content['Name2.bib'])
+            self.assertNotIn('tag1', zip_content['Name2.bib'],)
+            self.assertNotIn('notes =', zip_content['Name2.bib'])
 
     @mock.patch('harbour.views.boto3.client')
     def test_get_export_end_point_when_aws_s3_error(self, mock_resource):
@@ -924,14 +917,15 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('exporttwopointohlibraries', export='zotero')
-        r = self.client.get(url, headers={USER_ID_KEYWORD: user.absolute_uid})
+            url = url_for('exporttwopointohlibraries', export='zotero')
+            r = self.client.get(url, headers={USER_ID_KEYWORD: user.absolute_uid})
 
-        self.assertStatus(r, TWOPOINTOH_AWS_PROBLEM['code'])
-        self.assertEqual(r.json['error'], TWOPOINTOH_AWS_PROBLEM['message'])
+            self.assertStatus(r, TWOPOINTOH_AWS_PROBLEM['code'])
+            self.assertEqual(r.json['error'], TWOPOINTOH_AWS_PROBLEM['message'])
 
     def test_get_libraries_end_point_when_users_have_not_loaded(self):
         """
@@ -970,18 +964,19 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # Setup S3 storage
-        TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
+            # Setup S3 storage
+            TestExportADSTwoPointOhLibraries.helper_s3_mock_setup()
 
-        url = url_for('exporttwopointohlibraries', export='zotero')
-        r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
-        self.assertIn(
-            'https://adsabs-mongogut.s3.amazonaws.com/cb16a523-cdba-406b-bfff-edfd428248be.zotero.zip',
-            r.json['url'],
-        )
+            url = url_for('exporttwopointohlibraries', export='zotero')
+            r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
+            self.assertIn(
+                'https://adsabs-mongogut.s3.amazonaws.com/cb16a523-cdba-406b-bfff-edfd428248be.zotero.zip',
+                r.json['url'],
+            )
 
 
 class TestClassicLibraries(TestBaseDatabase):
@@ -1015,18 +1010,19 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        # 2. The database is checked to see if the user exists, and the cookie
-        # retrieved
-        #  3. The ADS Classic end point is contacted, returning a 200, and the
-        # content returned
-        url = url_for('classiclibraries', uid=10)
-        with HTTMock(ads_classic_libraries_200):
-            r = self.client.get(url)
-        self.assertStatus(r, 200)
-        self.assertEqual(r.json['libraries'], stub_get_libraries['libraries'])
+            # 2. The database is checked to see if the user exists, and the cookie
+            # retrieved
+            #  3. The ADS Classic end point is contacted, returning a 200, and the
+            # content returned
+            url = url_for('classiclibraries', uid=10)
+            with HTTMock(ads_classic_libraries_200):
+                r = self.client.get(url)
+            self.assertStatus(r, 200)
+            self.assertEqual(r.json['libraries'], stub_get_libraries['libraries'])
 
     def test_get_libraries_when_the_user_does_not_exist(self):
         """
@@ -1050,14 +1046,15 @@ class TestClassicLibraries(TestBaseDatabase):
             absolute_uid=10,
             twopointoh_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('classiclibraries', uid=10)
-        r = self.client.get(url)
+            url = url_for('classiclibraries', uid=10)
+            r = self.client.get(url)
 
-        self.assertStatus(r, NO_CLASSIC_ACCOUNT['code'])
-        self.assertEqual(r.json['error'], NO_CLASSIC_ACCOUNT['message'])
+            self.assertStatus(r, NO_CLASSIC_ACCOUNT['code'])
+            self.assertEqual(r.json['error'], NO_CLASSIC_ACCOUNT['message'])
 
     @mock.patch('harbour.views.requests.get')
     def test_get_libraries_when_ads_classic_timesout(self, mocked_get):
@@ -1071,17 +1068,18 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        mocked_get.side_effect = Timeout
+            mocked_get.side_effect = Timeout
 
-        url = url_for('classiclibraries', uid=10)
+            url = url_for('classiclibraries', uid=10)
 
-        r = self.client.get(url)
+            r = self.client.get(url)
 
-        self.assertStatus(r, CLASSIC_TIMEOUT['code'])
-        self.assertEqual(r.json['error'], CLASSIC_TIMEOUT['message'])
+            self.assertStatus(r, CLASSIC_TIMEOUT['code'])
+            self.assertEqual(r.json['error'], CLASSIC_TIMEOUT['message'])
 
     def test_get_libraries_when_ads_classic_returns_non_200(self):
         """
@@ -1094,12 +1092,13 @@ class TestClassicLibraries(TestBaseDatabase):
             classic_mirror='mirror.com',
             classic_email='user@ads.com'
         )
-        db.session.add(user)
-        db.session.commit()
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
 
-        url = url_for('classiclibraries', uid=10)
-        with HTTMock(ads_classic_fail):
-            r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
+            url = url_for('classiclibraries', uid=10)
+            with HTTMock(ads_classic_fail):
+                r = self.client.get(url, headers={USER_ID_KEYWORD: 10})
 
-        self.assertStatus(r, CLASSIC_UNKNOWN_ERROR['code'])
-        self.assertEqual(r.json['error'], CLASSIC_UNKNOWN_ERROR['message'])
+            self.assertStatus(r, CLASSIC_UNKNOWN_ERROR['code'])
+            self.assertEqual(r.json['error'], CLASSIC_UNKNOWN_ERROR['message'])

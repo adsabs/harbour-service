@@ -10,10 +10,10 @@ import traceback
 
 from utils import get_post_data, err
 from flask import current_app, request, send_file
-from flask.ext.restful import Resource
-from flask.ext.discoverer import advertise
+from flask_restful import Resource
+from flask_discoverer import advertise
 from client import client
-from models import db, Users
+from models import Users
 from zipfile import ZipFile
 from StringIO import StringIO
 from http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
@@ -540,19 +540,21 @@ class AuthenticateUserClassic(BaseView):
                     classic_mirror=classic_mirror
                 )
 
-            db.session.add(user)
-            db.session.commit()
+            with current_app.session_scope() as session:
+                session.add(user)
+                session.commit()
 
-            current_app.logger.info(
-                'Successfully saved content for "{}" to database: {{"cookie": "{}"}}'
-                .format(classic_email, '*'*len(user.classic_cookie))
-            )
+                current_app.logger.info(
+                    'Successfully saved content for "{}" to database: {{"cookie": "{}"}}'
+                    .format(classic_email, '*'*len(user.classic_cookie))
+                )
 
-            return {
-                'classic_email': email,
-                'classic_mirror': classic_mirror,
-                'classic_authed': True
-            }, 200
+                return {
+                    'classic_email': email,
+                    'classic_mirror': classic_mirror,
+                    'classic_authed': True
+                }, 200
+            return err(HARBOUR_SERVICE_FAIL)
         else:
             current_app.logger.warning(
                 'Credentials for "{email}" did not succeed at mirror "{mirror}"'
@@ -683,18 +685,20 @@ class AuthenticateUserTwoPointOh(BaseView):
                     twopointoh_email=twopointoh_email
                 )
 
-            db.session.add(user)
-            db.session.commit()
+            with current_app.session_scope() as session:
+                session.add(user)
+                session.commit()
 
-            current_app.logger.info(
-                'Successfully saved content for "{}" to database'
-                .format(twopointoh_email)
-            )
+                current_app.logger.info(
+                    'Successfully saved content for "{}" to database'
+                    .format(twopointoh_email)
+                )
 
-            return {
-                'twopointoh_email': email,
-                'twopointoh_authed': True
-            }, 200
+                return {
+                    'twopointoh_email': email,
+                    'twopointoh_authed': True
+                }, 200
+            return err(HARBOUR_SERVICE_FAIL)
         else:
             current_app.logger.warning(
                 'ADS 2.0 credentials for "{email}" did not succeed"'

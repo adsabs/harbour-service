@@ -63,3 +63,8 @@ TWOPOINTOH_WRONG_EXPORT_TYPE = dict(
     message='This export type does not exist. See the API documentation: {0}'.format(API_HELP),
     code=400
 )
+
+HARBOUR_SERVICE_FAIL = dict(
+    message='Unknown failure from harbour-service',
+    code=500
+)

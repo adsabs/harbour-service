@@ -2,11 +2,13 @@ language: python
 python:
   - "2.7"
 install:
+  - pip install --upgrade pip
   - pip install -r requirements.txt
   - pip install -r dev-requirements.txt
 addons:
   postgresql: "9.3"
-script: nosetests --with-coverage harbour/tests/unit_tests
-sudo: false
+script:
+  - py.test
 after_success:
- - coveralls
+  - "coveralls"
+sudo: false

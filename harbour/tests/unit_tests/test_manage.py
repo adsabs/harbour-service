@@ -4,7 +4,7 @@ Tests the methods within the flask-script file manage.py
 
 from base import TestBaseDatabase
 from harbour.manage import CreateDatabase
-from harbour.models import db, Users
+from harbour.models import Base, Users
 from sqlalchemy import create_engine
 
 
@@ -29,4 +29,4 @@ class TestManagePy(TestBaseDatabase):
             self.assertTrue(exists)
 
         # Clean up the tables
-        db.metadata.drop_all(bind=engine)
+        Base.metadata.drop_all(bind=engine)

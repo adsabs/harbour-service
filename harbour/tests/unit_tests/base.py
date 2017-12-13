@@ -3,10 +3,10 @@ Base properties for all of the unit tests that are shared between each file
 """
 import testing.postgresql
 
-from flask.ext.testing import TestCase
+from flask_testing import TestCase
 from harbour import app
 
-from harbour.models import db
+from harbour.models import Base
 
 
 class TestBase(TestCase):
@@ -17,17 +17,20 @@ class TestBase(TestCase):
         """
         Create the wsgi application
         """
-        app_ = app.create_app()
-        app_.config['CLASSIC_LOGGING'] = {}
-        app_.config['SQLALCHEMY_BINDS'] = {}
-        app_.config['ADS_CLASSIC_MIRROR_LIST'] = [
-            'mirror.com', 'other.mirror.com'
-        ]
-        app_.config['ADS_TWO_POINT_OH_MIRROR'] = 'mirror.com'
-        app_.config['SQLALCHEMY_BINDS']['harbour'] = \
-            TestBaseDatabase.postgresql_url
+        a = app.create_app(**{
+               'CLASSIC_LOGGING': {},
+               'ADS_CLASSIC_MIRROR_LIST': ['mirror.com', 'other.mirror.com'],
+               'ADS_TWO_POINT_OH_MIRROR': 'mirror.com',
+               'SQLALCHEMY_DATABASE_URI': TestBaseDatabase.postgresql_url,
+               'SQLALCHEMY_ECHO': True,
+               'TESTING': True,
+               'PROPAGATE_EXCEPTIONS': True,
+               'TRAP_BAD_REQUEST_ERRORS': True,
+               'SOLR_SERVICE_DISALLOWED_FIELDS': ['full', 'bar']
+            })
+        Base.query = a.db.session.query_property()
 
-        return app_
+        return a
 
 
 class TestBaseDatabase(TestBase):
@@ -61,7 +64,7 @@ class TestBaseDatabase(TestBase):
         """
         Set up the database for use
         """
-        db.create_all()
+        Base.metadata.create_all(bind=self.app.db.engine)
         self.stub_user_data = {
             'classic_email': 'user@ads.com',
             'classic_password': 'password',
@@ -77,5 +80,5 @@ class TestBaseDatabase(TestBase):
         """
         Remove/delete the database and the relevant connections
         """
-        db.session.remove()
-        db.drop_all()
+        self.app.db.session.remove()
+        Base.metadata.drop_all(bind=self.app.db.engine)

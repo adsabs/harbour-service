@@ -23,41 +23,10 @@ ADS_TWO_POINT_OH_LOADED_USERS = False
 ADS_TWO_POINT_OH_USERS = {}
 ADS_TWO_POINT_OH_MIRROR = 'adsabs.harvard.edu'
 
-SQLALCHEMY_BINDS = {'harbour': ''}
+SQLALCHEMY_DATABASE_URI = ""
 
 HARBOUR_SERVICE_ADSWS_API_TOKEN = ''
 HARBOUR_EXPORT_SERVICE_URL = 'http://fakeapi.adsabs.harvard.edu/v1/export'
 HARBOUR_EXPORT_TYPES = ['zotero', 'mendeley']
 
 ENVIRONMENT = os.getenv('ENVIRONMENT', 'staging').lower()
-HARBOUR_LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'default': {
-            'format': '%(levelname)s\t%(process)d '
-                      '[%(asctime)s]:\t%(message)s',
-            'datefmt': '%m/%d/%Y %H:%M:%S',
-        }
-    },
-    'handlers': {
-        'file': {
-            'formatter': 'default',
-            'level': 'INFO',
-            'class': 'logging.handlers.TimedRotatingFileHandler',
-            'filename': '/tmp/harbour.app.{}.log'.format(ENVIRONMENT),
-        },
-        'console': {
-            'formatter': 'default',
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler'
-        },
-    },
-    'loggers': {
-        '': {
-            'handlers': ['file'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-    },
-}
