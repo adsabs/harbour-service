@@ -28,8 +28,6 @@ class TestBase(TestCase):
                'TRAP_BAD_REQUEST_ERRORS': True,
                'SOLR_SERVICE_DISALLOWED_FIELDS': ['full', 'bar']
             })
-        Base.query = a.db.session.query_property()
-
         return a
 
 
