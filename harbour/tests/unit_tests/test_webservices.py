@@ -40,14 +40,14 @@ class TestClassicUser(TestBaseDatabase):
         Tests that the user successfully retrieves their settings for the ADS
         Classic service
         """
-        # Stub data
-        user = Users(
-            absolute_uid=10,
-            classic_email='user@ads.com',
-            classic_cookie='some cookie',
-            classic_mirror='mirror.com'
-        )
         with self.app.session_scope() as session:
+            # Stub data
+            user = Users(
+                absolute_uid=10,
+                classic_email='user@ads.com',
+                classic_cookie='some cookie',
+                classic_mirror='mirror.com'
+            )
             session.add(user)
             session.commit()
 
@@ -57,8 +57,8 @@ class TestClassicUser(TestBaseDatabase):
 
             # Check we get what we expected
             self.assertStatus(r, 200)
-            self.assertEqual(r.json['classic_email'], user.classic_email)
-            self.assertEqual(r.json['classic_mirror'], user.classic_mirror)
+            self.assertEqual(r.json['classic_email'], 'user@ads.com')
+            self.assertEqual(r.json['classic_mirror'], 'mirror.com')
             self.assertEqual(r.json['twopointoh_email'], '')
 
     def test_get_a_400_when_the_user_does_not_exist(self):
@@ -122,17 +122,17 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             self.stub_user_data['classic_email']
         )
         self.assertTrue(r.json['classic_authed'])
-
-        user = Users.query.filter(Users.absolute_uid == 10).one()
-        self.assertEqual(
-            user.classic_email,
-            self.stub_user_data['classic_email']
-        )
-        self.assertEqual(
-            user.classic_mirror,
-            self.stub_user_data['classic_mirror']
-        )
-        self.assertIsInstance(user.classic_cookie, unicode)
+        with self.app.session_scope() as session:
+            user = session.query(Users).filter(Users.absolute_uid == 10).one()
+            self.assertEqual(
+                user.classic_email,
+                self.stub_user_data['classic_email']
+            )
+            self.assertEqual(
+                user.classic_mirror,
+                self.stub_user_data['classic_mirror']
+            )
+            self.assertIsInstance(user.classic_cookie, unicode)
 
     def test_user_authentication_success_if_user_already_exists(self):
         """
@@ -169,7 +169,7 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             )
             self.assertTrue(r.json['classic_authed'])
 
-            r_user = Users.query.filter(Users.absolute_uid == 10).one()
+            r_user = session.query(Users).filter(Users.absolute_uid == 10).one()
 
             self.assertEqual(
                 r_user.classic_email,
@@ -189,15 +189,18 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
         the same in the database
         """
         # Stub out the user in the database
-        user = Users(
-            absolute_uid=10,
-            classic_email='before@ads.com',
-            classic_cookie='some cookie',
-            classic_mirror='other.mirror.com'
-        )
         with self.app.session_scope() as session:
+            user = Users(
+                absolute_uid=10,
+                classic_email='before@ads.com',
+                classic_cookie='some cookie',
+                classic_mirror='other.mirror.com'
+            )
             session.add(user)
             session.commit()
+            
+            session.refresh(user)
+            user = repr(user)
 
             # 1. The user fills in their credentials
             # 2. The user submits their credentials to the end point
@@ -217,8 +220,8 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
                         headers={USER_ID_KEYWORD: 10}
                     )
 
-                r_user = Users.query.filter(Users.absolute_uid == 10).one()
-                self.assertEqual(r_user, user)
+                r_user = session.query(Users).filter(Users.absolute_uid == 10).one()
+                self.assertEqual(repr(r_user), user)
 
     def test_user_authentication_unknown_user(self):
         """
@@ -371,12 +374,13 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             self.stub_user_data_2p0['twopointoh_email']
         )
         self.assertTrue(r.json['twopointoh_authed'])
-
-        user = Users.query.filter(Users.absolute_uid == 10).one()
-        self.assertEqual(
-            user.twopointoh_email,
-            self.stub_user_data_2p0['twopointoh_email']
-        )
+        
+        with self.app.session_scope() as session:
+            user = session.query(Users).filter(Users.absolute_uid == 10).one()
+            self.assertEqual(
+                user.twopointoh_email,
+                self.stub_user_data_2p0['twopointoh_email']
+            )
 
     def test_user_authentication_success_if_user_already_exists(self):
         """
@@ -411,7 +415,7 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             )
             self.assertTrue(r.json['twopointoh_authed'])
 
-            r_user = Users.query.filter(Users.absolute_uid == 10).one()
+            r_user = session.query(Users).filter(Users.absolute_uid == 10).one()
 
             self.assertEqual(
                 r_user.twopointoh_email,
@@ -451,7 +455,7 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
                         headers={USER_ID_KEYWORD: 10}
                     )
 
-                r_user = Users.query.filter(Users.absolute_uid == 10).one()
+                r_user = session.query(Users).filter(Users.absolute_uid == 10).one()
                 self.assertEqual(r_user.twopointoh_email, 'before@ads.com')
 
     def test_user_authentication_unknown_user(self):
