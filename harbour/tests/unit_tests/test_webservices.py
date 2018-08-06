@@ -198,7 +198,7 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
             )
             session.add(user)
             session.commit()
-            
+
             session.refresh(user)
             user = repr(user)
 
@@ -249,7 +249,7 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
         self.assertStatus(r, CLASSIC_AUTH_FAILED['code'])
         self.assertEqual(r.json['error'], CLASSIC_AUTH_FAILED['message'])
 
-    @mock.patch('harbour.views.requests.post')
+    @mock.patch('harbour.views.current_app.client.post')
     def test_ads_classic_timeout(self, mocked_post):
         """
         Test that the service catches timeouts and returns a HTTP error response
@@ -374,7 +374,7 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
             self.stub_user_data_2p0['twopointoh_email']
         )
         self.assertTrue(r.json['twopointoh_authed'])
-        
+
         with self.app.session_scope() as session:
             user = session.query(Users).filter(Users.absolute_uid == 10).one()
             self.assertEqual(
@@ -484,7 +484,7 @@ class TestAuthenticateUserTwoPointOh(TestBaseDatabase):
         self.assertStatus(r, CLASSIC_AUTH_FAILED['code'])
         self.assertEqual(r.json['error'], CLASSIC_AUTH_FAILED['message'])
 
-    @mock.patch('harbour.views.requests.post')
+    @mock.patch('harbour.views.current_app.client.post')
     def test_ads_classic_timeout(self, mocked_post):
         """
         Test that the service catches timeouts and returns a HTTP error response
@@ -1060,7 +1060,7 @@ class TestClassicLibraries(TestBaseDatabase):
             self.assertStatus(r, NO_CLASSIC_ACCOUNT['code'])
             self.assertEqual(r.json['error'], NO_CLASSIC_ACCOUNT['message'])
 
-    @mock.patch('harbour.views.requests.get')
+    @mock.patch('harbour.views.current_app.client.get')
     def test_get_libraries_when_ads_classic_timesout(self, mocked_get):
         """
         Test that if ADS Classic times out before finishing the request, that

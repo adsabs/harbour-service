@@ -192,31 +192,31 @@ class TwoPointOhLibraries(BaseView):
                     'Users from MongoDB have not been loaded into the app'
                 )
                 return err(TWOPOINTOH_AWS_PROBLEM)
-    
+
             try:
                 user = session.query(Users).filter(Users.absolute_uid == uid).one()
-    
+
                 # Have they got an email for ADS 2.0?
                 if not user.twopointoh_email:
                     raise NoResultFound
-    
+
             except NoResultFound:
                 current_app.logger.warning(
                     'User does not have an associated ADS 2.0 account'
                 )
                 return err(NO_TWOPOINTOH_ACCOUNT)
-    
+
             library_file_name = current_app.config['ADS_TWO_POINT_OH_USERS'].get(
                 user.twopointoh_email,
                 None
             )
-    
+
             if not library_file_name:
                 current_app.logger.warning(
                     'User does not have any libraries in ADS 2.0'
                 )
                 return err(NO_TWOPOINTOH_LIBRARIES)
-    
+
             try:
                 library = TwoPointOhLibraries.get_s3_library(library_file_name)
             except Exception as error:
@@ -224,7 +224,7 @@ class TwoPointOhLibraries(BaseView):
                     'Unknown error with AWS: {}'.format(error)
                 )
                 return err(TWOPOINTOH_AWS_PROBLEM)
-    
+
             return {'libraries': library}, 200
 
 
@@ -266,39 +266,39 @@ class ExportTwoPointOhLibraries(BaseView):
         with current_app.session_scope() as session:
             if export not in current_app.config['HARBOUR_EXPORT_TYPES']:
                 return err(TWOPOINTOH_WRONG_EXPORT_TYPE)
-    
+
             if not current_app.config['ADS_TWO_POINT_OH_LOADED_USERS']:
                 current_app.logger.error(
                     'Users from MongoDB have not been loaded into the app'
                 )
                 return err(TWOPOINTOH_AWS_PROBLEM)
-    
+
             absolute_uid = self.helper_get_user_id()
-    
+
             try:
                 user = session.query(Users).filter(Users.absolute_uid == absolute_uid).one()
-    
+
                 # Have they got an email for ADS 2.0?
                 if not user.twopointoh_email:
                     raise NoResultFound
-    
+
             except NoResultFound:
                 current_app.logger.warning(
                     'User does not have an associated ADS Classic/2.0 account'
                 )
                 return err(NO_TWOPOINTOH_ACCOUNT)
-    
+
             library_file_name = current_app.config['ADS_TWO_POINT_OH_USERS'].get(
                 user.twopointoh_email,
                 None
             )
-    
+
             if not library_file_name:
                 current_app.logger.warning(
                     'User does not have any libraries in ADS 2.0'
                 )
                 return err(NO_TWOPOINTOH_LIBRARIES)
-    
+
             try:
                 s3 = boto3.client('s3')
                 s3_presigned_url = s3.generate_presigned_url(
@@ -314,7 +314,7 @@ class ExportTwoPointOhLibraries(BaseView):
                     'Unknown error with AWS: {}'.format(error)
                 )
                 return err(TWOPOINTOH_AWS_PROBLEM)
-    
+
             return {'url': s3_presigned_url}, 200
 
 
@@ -363,36 +363,36 @@ class ClassicLibraries(BaseView):
                     'User does not have an associated ADS Classic account'
                 )
                 return err(NO_CLASSIC_ACCOUNT)
-    
+
             url = current_app.config['ADS_CLASSIC_LIBRARIES_URL'].format(
                 mirror=user.classic_mirror,
                 cookie=user.classic_cookie
             )
-    
+
             current_app.logger.debug('Obtaining libraries via: {}'.format(url))
             try:
-                response = requests.get(url)
+                response = current_app.client.get(url)
             except requests.exceptions.Timeout:
                 current_app.logger.warning(
                     'ADS Classic timed out before finishing: {}'.format(url)
                 )
                 return err(CLASSIC_TIMEOUT)
-    
+
             if response.status_code != 200:
                 current_app.logger.warning(
                     'ADS Classic returned an unkown status code: "{}" [code: {}]'
                     .format(response.text, response.status_code)
                 )
                 return err(CLASSIC_UNKNOWN_ERROR)
-    
+
             data = response.json()
-    
+
             libraries = [dict(
                 name=i['name'],
                 description=i.get('desc', ''),
                 documents=[j['bibcode'] for j in i['entries']]
             ) for i in data['libraries']]
-    
+
             return {'libraries': libraries}, 200
 
 
@@ -449,7 +449,7 @@ class AuthenticateUserClassic(BaseView):
                     .format(traceback.print_exc())
                 )
                 return err(CLASSIC_DATA_MALFORMED)
-    
+
             # Check that the mirror exists and not man-in-the-middle
             if classic_mirror not in current_app.config['ADS_CLASSIC_MIRROR_LIST']:
                 current_app.logger.warning(
@@ -457,7 +457,7 @@ class AuthenticateUserClassic(BaseView):
                     .format(classic_email, classic_mirror)
                 )
                 return err(CLASSIC_BAD_MIRROR)
-    
+
             # Create the correct URL
             url = current_app.config['ADS_CLASSIC_URL'].format(
                 mirror=classic_mirror,
@@ -467,14 +467,14 @@ class AuthenticateUserClassic(BaseView):
                 'man_email': classic_email,
                 'man_passwd': classic_password
             }
-    
+
             # Authenticate
             current_app.logger.info(
                 'User "{email}" trying to authenticate at mirror "{mirror}"'
                 .format(email=classic_email, mirror=classic_mirror)
             )
             try:
-                response = requests.post(
+                response = current_app.client.post(
                     url,
                     params=params
                 )
@@ -483,7 +483,7 @@ class AuthenticateUserClassic(BaseView):
                     'ADS Classic end point timed out, returning to user'
                 )
                 return err(CLASSIC_TIMEOUT)
-    
+
             if response.status_code >= 500:
                 message, status_code = err(CLASSIC_UNKNOWN_ERROR)
                 message['ads_classic'] = {
@@ -495,7 +495,7 @@ class AuthenticateUserClassic(BaseView):
                     .format(response.text)
                 )
                 return message, status_code
-    
+
             # Sanity check the response
             email = response.json()['email']
             if email != classic_email:
@@ -504,7 +504,7 @@ class AuthenticateUserClassic(BaseView):
                     .format(classic_email, email)
                 )
                 return err(CLASSIC_AUTH_FAILED)
-    
+
             # Respond to the user based on whether they were successful or not
             if response.status_code == 200 \
                     and response.json()['message'] == 'LOGGED_IN' \
@@ -513,7 +513,7 @@ class AuthenticateUserClassic(BaseView):
                     'Authenticated successfully "{email}" at mirror "{mirror}"'
                     .format(email=classic_email, mirror=classic_mirror)
                 )
-    
+
                 # Save cookie in myADS
                 try:
                     cookie = response.json()['cookie']
@@ -523,13 +523,13 @@ class AuthenticateUserClassic(BaseView):
                         .format(response.json())
                     )
                     return err(CLASSIC_NO_COOKIE)
-    
+
                 absolute_uid = self.helper_get_user_id()
                 try:
                     user = session.query(Users).filter(
                         Users.absolute_uid == absolute_uid
                     ).one()
-    
+
                     current_app.logger.info('User already exists in database')
                     user.classic_mirror = classic_mirror
                     user.classic_cookie = cookie
@@ -542,9 +542,9 @@ class AuthenticateUserClassic(BaseView):
                         classic_email=classic_email,
                         classic_mirror=classic_mirror
                     )
-    
+
                     session.add(user)
-    
+
                 session.commit()
                 current_app.logger.info(
                     'Successfully saved content for "{}" to database: {{"cookie": "{}"}}'
@@ -632,7 +632,7 @@ class AuthenticateUserTwoPointOh(BaseView):
             .format(email=twopointoh_email)
         )
         try:
-            response = requests.post(
+            response = current_app.client.post(
                 url,
                 params=params
             )
@@ -678,7 +678,7 @@ class AuthenticateUserTwoPointOh(BaseView):
                     user = session.query(Users).filter(
                         Users.absolute_uid == absolute_uid
                     ).one()
-    
+
                     current_app.logger.info('User already exists in database')
                     user.twopointoh_email = twopointoh_email
                 except NoResultFound:

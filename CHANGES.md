@@ -2,6 +2,18 @@
 All notable changes to the config fileswill be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.13] - 2018-08-06
+
+* Enabled JSON stdout logging and HTTP connection pool
+
+## [1.0.12] - 2017-12-26
+
+* Updated db objects after migration to ADSFlask
+
+## [1.0.11] - 2017-12-14
+
+* Migrated to ADSFlask
+
 ## [1.0.10] - 2017-12-12
  
   * Requirements.txt update and microservice migrated to ADSFlask from adsmutils

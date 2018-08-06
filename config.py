@@ -1,5 +1,6 @@
 # encoding: utf-8
 import os
+LOG_STDOUT = True
 ADS_CLASSIC_URL = 'http://{mirror}'
 ADS_CLASSIC_LIBRARIES_URL = 'http://{mirror}/cookie={cookie}'
 ADS_CLASSIC_MIRROR_LIST = [
