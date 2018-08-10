@@ -2,6 +2,10 @@
 All notable changes to the config fileswill be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.14] - 2018-08-10
+
+* Updated adsmutils requirement
+
 ## [1.0.13] - 2018-08-06
 
 * Enabled JSON stdout logging and HTTP connection pool
