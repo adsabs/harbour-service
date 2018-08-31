@@ -5,3 +5,4 @@ local_config.py
 logs/
 *.idea*
 .coverage
+python

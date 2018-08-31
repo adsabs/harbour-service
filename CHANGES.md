@@ -2,6 +2,10 @@
 All notable changes to the config fileswill be documented in this file.
 This project adheres to [Semantic Versioning](http://semver.org/).
 
+## [1.0.15] - 2018-08-31
+
+* Removed unnecessary requirements
+
 ## [1.0.14] - 2018-08-10
 
 * Updated adsmutils requirement
