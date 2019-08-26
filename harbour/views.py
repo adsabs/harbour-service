@@ -368,7 +368,6 @@ class ClassicLibraries(BaseView):
                 mirror=user.classic_mirror,
                 cookie=user.classic_cookie
             )
-
             current_app.logger.debug('Obtaining libraries via: {}'.format(url))
             try:
                 response = current_app.client.get(url)
@@ -379,7 +378,7 @@ class ClassicLibraries(BaseView):
                 return err(CLASSIC_TIMEOUT)
 
             if response.status_code != 200:
-                current_app.logger.warning(
+                current_app.logger.info(
                     'ADS Classic returned an unkown status code: "{}" [code: {}]'
                     .format(response.text, response.status_code)
                 )
@@ -706,3 +705,71 @@ class AuthenticateUserTwoPointOh(BaseView):
                 .format(email=twopointoh_email)
             )
             return err(CLASSIC_AUTH_FAILED)
+
+class ClassicMyADS(BaseView):
+    """
+    End point to collect the user's ADS classic libraries with the external ADS
+    Classic end point
+    """
+
+    decorators = [advertise('scopes', 'rate_limit')]
+    scopes = ['adsws:internal']
+    rate_limit = [1000, 60*60*24]
+
+    def get(self, uid):
+        """
+        HTTP GET request that contacts the ADS Classic myADS end point to
+        obtain all the libraries relevant to that user.
+
+        :param uid: user ID for the API
+        :type uid: int
+
+        Return data (on success)
+        ------------------------
+        
+
+        HTTP Responses:
+        --------------
+        Succeed getting libraries: 200
+        User does not have a classic account: 400
+        ADS Classic give unknown messages: 500
+        ADS Classic times out: 504
+
+        Any other responses will be default Flask errors
+        """
+        data = {}
+        with current_app.session_scope() as session:
+            try:
+                user = session.query(Users).filter(Users.absolute_uid == uid).one()
+                if not user.classic_email:
+                    raise NoResultFound
+            except NoResultFound:
+                current_app.logger.warning(
+                    'User does not have an associated ADS Classic account'
+                )
+                return err(NO_CLASSIC_ACCOUNT)
+
+            url = current_app.config['ADS_CLASSIC_MYADS_URL'].format(
+                mirror='adsabs.harvard.edu',
+                email=user.classic_email
+            )
+
+            current_app.logger.debug('Obtaining libraries via: {}'.format(url))
+            try:
+                response = current_app.client.get(url)
+            except requests.exceptions.Timeout:
+                current_app.logger.warning(
+                    'ADS Classic timed out before finishing: {}'.format(url)
+                )
+                return err(CLASSIC_TIMEOUT)
+
+            if response.status_code != 200:
+                current_app.logger.warning(
+                    'ADS Classic returned an unkown status code: "{}" [code: {}]'
+                    .format(response.text, response.status_code)
+                )
+                return err(CLASSIC_UNKNOWN_ERROR)
+
+            data = response.json()
+
+            return data, 200

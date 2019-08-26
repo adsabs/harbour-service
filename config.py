@@ -3,6 +3,7 @@ import os
 LOG_STDOUT = True
 ADS_CLASSIC_URL = 'http://{mirror}'
 ADS_CLASSIC_LIBRARIES_URL = 'http://{mirror}/cookie={cookie}'
+ADS_CLASSIC_MYADS_URL = 'http://{mirror}?{email}'
 ADS_CLASSIC_MIRROR_LIST = [
     'astrobib.u-strasbg.fr',
     'ads.nao.ac.jp',
