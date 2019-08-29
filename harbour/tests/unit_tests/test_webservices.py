@@ -19,7 +19,8 @@ from harbour.http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
     TWOPOINTOH_WRONG_EXPORT_TYPE
 from stub_response import ads_classic_200, ads_classic_unknown_user, \
     ads_classic_wrong_password, ads_classic_no_cookie, ads_classic_fail, \
-    ads_classic_libraries_200, export_success, export_success_no_keyword
+    ads_classic_libraries_200, export_success, export_success_no_keyword, \
+    ads_classic_myads_200
 from httmock import HTTMock
 from zipfile import ZipFile
 from StringIO import StringIO
@@ -1106,3 +1107,39 @@ class TestClassicLibraries(TestBaseDatabase):
 
             self.assertStatus(r, CLASSIC_UNKNOWN_ERROR['code'])
             self.assertEqual(r.json['error'], CLASSIC_UNKNOWN_ERROR['message'])
+
+class TestClassicMyADS(TestBaseDatabase):
+    """
+    Tests the myADS end point that returns the myADS settings from ADS classic
+    that belong to a user
+    """
+    def test_get_myads_end_point(self):
+        """
+        Test the workflow of successfully retrieving myADS settings
+        """
+        stub_get_myads = {u'pre_aut,': u'Henneken, Edwin\r\nKurtz, Michael J.\r\nHernquist, L.\r\nIcke, V.\r\nMellema, G.\r\nRosvall, Martin\r\nBergstrom, Carl\r\nNewman, Mark', u'firstname': u'Edwin', u'phy_t1,': u'bibliometrics\r\ninformetrics\r\neigenfactor\r\nrecommendation\r\n=citation\r\n"digital library"', u'ast_t1,': u'bibliometrics\r\ninformetrics\r\neigenfactor\r\nrecommendation\r\n=citation\r\n"digital library"', u'phy_aut,': u'Henneken, Edwin\r\nKurtz, Michael J.\r\nHernquist, L.\r\nIcke, V.\r\nMellema, G.\r\nRosvall, Martin\r\nBergstrom, Carl\r\nNewman, Mark', u'ast_aut,': u'Henneken, Edwin\r\nKurtz, Michael J.\r\nHernquist, L.\r\nIcke, V.\r\nMellema, G.\r\nRosvall, Martin\r\nBergstrom, Carl\r\nNewman, Mark', u'phy_t2,': u'"digital library"\r\n"search engine"\r\n"information retrieval"\r\n', u'email': u'ehenneken@gmail.com', u'pre_t1,': u'bibliometrics\r\ninformetrics\r\neigenfactor\r\nrecommendation\r\n=citation\r\n"digital library"', u'daily_t1,': u'"gamma ray bursts"', u'groups': [u'astro-ph', u'cs', u'gr-qc', u'math-ph'], u'lastname': u'Henneken', u'ast_t2,': u'"digital library"\r\n"search engine"\r\n"information retrieval"\r\n', u'pre_t2,': u'"digital library"\r\n"search engine"\r\n"information retrieval"\r\n', u'id': 2093057}
+
+        # 1. The user is identified via header information
+        # - Generate dummy user in database
+        # - Give the header the correct information
+        user = Users(
+            absolute_uid=10,
+            classic_cookie='ef9df8ds',
+            classic_mirror='mirror.com',
+            classic_email='user@ads.com'
+        )
+        with self.app.session_scope() as session:
+            session.add(user)
+            session.commit()
+
+            # 2. The database is checked to see if the user exists, and the cookie
+            # retrieved
+            #  3. The ADS Classic end point is contacted, returning a 200, and the
+            # content returned
+            url = url_for('classicmyads', uid=10)
+
+            with HTTMock(ads_classic_myads_200):
+                r = self.client.get(url)
+
+            self.assertStatus(r, 200)
+            self.assertEqual(r.json, stub_get_myads)

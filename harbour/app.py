@@ -13,7 +13,7 @@ from flask_restful import Api
 from flask_discoverer import Discoverer
 from views import AuthenticateUserClassic, AuthenticateUserTwoPointOh, \
     AllowedMirrors, ClassicLibraries, ClassicUser, TwoPointOhLibraries, \
-    ExportTwoPointOhLibraries
+    ExportTwoPointOhLibraries, ClassicMyADS
 
 from StringIO import StringIO
 from adsmutils import ADSFlask
@@ -56,6 +56,12 @@ def create_app(**config):
     api.add_resource(
         ExportTwoPointOhLibraries,
         '/export/twopointoh/<export>',
+        methods=['GET']
+    )
+
+    api.add_resource(
+        ClassicMyADS,
+        '/myads/classic/<int:uid>',
         methods=['GET']
     )
 
