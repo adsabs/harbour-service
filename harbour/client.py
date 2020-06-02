@@ -17,7 +17,7 @@ class Client:
         """
 
         self.session = current_app.client # Use HTTP pool provided by adsmutils ADSFlask
-        self.token = config.get('HARBOUR_SERVICE_ADSWS_API_TOKEN')
+        self.token = config.get('SERVICE_TOKEN')
         if self.token:
             self.session.headers.update(
                 {'Authorization': 'Bearer {token}'.format(token=self.token)}
