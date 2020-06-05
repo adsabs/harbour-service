@@ -1,5 +1,11 @@
 # encoding: utf-8
 import os
+
+# must be here for adsmutils to override it using env vars
+# but if left empty (resolving to False) it won't be used
+SERVICE_TOKEN = None
+
+
 LOG_STDOUT = True
 ADS_CLASSIC_URL = 'http://{mirror}'
 ADS_CLASSIC_LIBRARIES_URL = 'http://{mirror}/cookie={cookie}'
