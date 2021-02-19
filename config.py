@@ -32,6 +32,7 @@ ADS_TWO_POINT_OH_USERS = {}
 ADS_TWO_POINT_OH_MIRROR = 'adsabs.harvard.edu'
 
 SQLALCHEMY_DATABASE_URI = ""
+SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 HARBOUR_EXPORT_SERVICE_URL = 'http://fakeapi.adsabs.harvard.edu/v1/export'
 HARBOUR_EXPORT_TYPES = ['zotero', 'mendeley']

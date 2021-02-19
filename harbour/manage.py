@@ -7,9 +7,9 @@ PROJECT_HOME = os.path.abspath(
     os.path.join(os.path.dirname(__file__), '..'))
 sys.path.append(PROJECT_HOME)
 
-from flask.ext.script import Manager, Command
-from flask.ext.migrate import Migrate, MigrateCommand
-from models import Base
+from flask_script import Manager, Command
+from flask_migrate import Migrate, MigrateCommand
+from harbour.models import Base
 from harbour.app import create_app
 
 # Load the app with the factory

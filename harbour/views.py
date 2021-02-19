@@ -2,26 +2,27 @@
 """
 Views
 """
+from future import standard_library
+standard_library.install_aliases()
 import re
 import json
 import boto3
 import requests
 import traceback
 
-from utils import get_post_data, err
 from flask import current_app, request, send_file
 from flask_restful import Resource
 from flask_discoverer import advertise
-from client import client
-from models import Users
-from zipfile import ZipFile
-from StringIO import StringIO
-from http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
+from io import BytesIO
+from sqlalchemy.orm.exc import NoResultFound
+
+from harbour.utils import get_post_data, err
+from harbour.models import Users
+from harbour.http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
     CLASSIC_TIMEOUT, CLASSIC_BAD_MIRROR, CLASSIC_NO_COOKIE, \
     CLASSIC_UNKNOWN_ERROR, NO_CLASSIC_ACCOUNT, NO_TWOPOINTOH_ACCOUNT, \
     NO_TWOPOINTOH_LIBRARIES, TWOPOINTOH_AWS_PROBLEM, EXPORT_SERVICE_FAIL, \
     TWOPOINTOH_WRONG_EXPORT_TYPE
-from sqlalchemy.orm.exc import NoResultFound
 
 USER_ID_KEYWORD = 'X-Adsws-Uid'
 
@@ -154,7 +155,7 @@ class TwoPointOhLibraries(BaseView):
             library_file_name
         )
         body = bucket.get()['Body']
-        library_data = StringIO()
+        library_data = BytesIO()
         for chunk in iter(lambda: body.read(1024), b''):
             library_data.write(chunk)
 

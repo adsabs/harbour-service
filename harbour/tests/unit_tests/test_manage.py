@@ -2,7 +2,7 @@
 Tests the methods within the flask-script file manage.py
 """
 
-from base import TestBaseDatabase
+from harbour.tests.unit_tests.base import TestBaseDatabase
 from harbour.manage import CreateDatabase
 from harbour.models import Base, Users
 from sqlalchemy import create_engine

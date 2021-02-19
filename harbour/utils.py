@@ -19,7 +19,7 @@ def get_post_data(request, types={}):
 
     if types and isinstance(post_data, dict):
         for expected_key in types:
-            if expected_key not in post_data.keys():
+            if expected_key not in list(post_data.keys()):
                 continue
 
             if not isinstance(post_data[expected_key],

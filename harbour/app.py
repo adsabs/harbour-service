@@ -3,19 +3,21 @@
 Application factory
 """
 
+from future import standard_library
+standard_library.install_aliases()
 import json
 import boto3
 import logging.config
 
 from flask import Flask
-from flask.ext.watchman import Watchman
+from flask_watchman import Watchman
 from flask_restful import Api
 from flask_discoverer import Discoverer
-from views import AuthenticateUserClassic, AuthenticateUserTwoPointOh, \
+from harbour.views import AuthenticateUserClassic, AuthenticateUserTwoPointOh, \
     AllowedMirrors, ClassicLibraries, ClassicUser, TwoPointOhLibraries, \
     ExportTwoPointOhLibraries, ClassicMyADS
 
-from StringIO import StringIO
+from io import BytesIO
 from adsmutils import ADSFlask
 
 
@@ -85,7 +87,7 @@ def load_s3(app):
         )
         body = bucket.get()['Body']
 
-        user_data = StringIO()
+        user_data = BytesIO()
         for chunk in iter(lambda: body.read(1024), b''):
             user_data.write(chunk)
 

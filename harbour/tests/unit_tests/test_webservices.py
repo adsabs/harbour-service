@@ -9,21 +9,22 @@ import boto3
 import unittest
 
 from moto import mock_s3
-from base import TestBaseDatabase
 from flask import url_for
+
 from harbour.models import Users
 from harbour.http_errors import CLASSIC_AUTH_FAILED, CLASSIC_DATA_MALFORMED, \
     CLASSIC_TIMEOUT, CLASSIC_BAD_MIRROR, CLASSIC_NO_COOKIE, \
     CLASSIC_UNKNOWN_ERROR, NO_CLASSIC_ACCOUNT, NO_TWOPOINTOH_LIBRARIES, \
     NO_TWOPOINTOH_ACCOUNT, TWOPOINTOH_AWS_PROBLEM, EXPORT_SERVICE_FAIL, \
     TWOPOINTOH_WRONG_EXPORT_TYPE
-from stub_response import ads_classic_200, ads_classic_unknown_user, \
+from harbour.tests.unit_tests.base import TestBaseDatabase
+from harbour.tests.unit_tests.stub_response import ads_classic_200, ads_classic_unknown_user, \
     ads_classic_wrong_password, ads_classic_no_cookie, ads_classic_fail, \
     ads_classic_libraries_200, export_success, export_success_no_keyword, \
     ads_classic_myads_200
 from httmock import HTTMock
 from zipfile import ZipFile
-from StringIO import StringIO
+from io import BytesIO
 from requests.exceptions import Timeout
 
 
@@ -133,7 +134,7 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
                 user.classic_mirror,
                 self.stub_user_data['classic_mirror']
             )
-            self.assertIsInstance(user.classic_cookie, unicode)
+            self.assertIsInstance(user.classic_cookie, str)
 
     def test_user_authentication_success_if_user_already_exists(self):
         """
@@ -180,7 +181,7 @@ class TestAuthenticateUserClassic(TestBaseDatabase):
                 r_user.classic_mirror,
                 self.stub_user_data['classic_mirror']
             )
-            self.assertIsInstance(r_user.classic_cookie, unicode)
+            self.assertIsInstance(r_user.classic_cookie, str)
 
     def test_user_authentication_fails_when_user_already_exists(self):
         """
@@ -849,7 +850,7 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
                 'attachment; filename=user_zotero.zip'
             )
 
-            zip_file = ZipFile(StringIO(r.get_data()))
+            zip_file = ZipFile(BytesIO(r.get_data()))
             zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
             self.assertEqual(
                 zip_content.keys(),
@@ -898,7 +899,7 @@ class TestExportADSTwoPointOhLibraries(TestBaseDatabase):
                 'attachment; filename=user_zotero.zip'
             )
 
-            zip_file = ZipFile(StringIO(r.get_data()))
+            zip_file = ZipFile(BytesIO(r.get_data()))
             zip_content = {name: zip_file.read(name) for name in zip_file.namelist()}
             self.assertEqual(
                 zip_content.keys(),

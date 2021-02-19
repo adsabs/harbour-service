@@ -4,7 +4,7 @@ Mock responses to be used with HTTMock
 """
 
 from httmock import urlmatch
-from stub_data import stub_classic_success, stub_classic_unknown_user, \
+from harbour.tests.unit_tests.stub_data import stub_classic_success, stub_classic_unknown_user, \
     stub_classic_wrong_password, stub_classic_no_cookie, \
     stub_classic_libraries_success, stub_export_success, \
     stub_export_success_no_keyword, stub_classic_myads_success
