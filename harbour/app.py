@@ -3,8 +3,6 @@
 Application factory
 """
 
-from future import standard_library
-standard_library.install_aliases()
 import json
 import boto3
 import logging.config

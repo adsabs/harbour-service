@@ -1,4 +1,3 @@
-from builtins import object
 import requests
 from flask import current_app, request
 
