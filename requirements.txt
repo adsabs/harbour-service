@@ -1,9 +1,10 @@
 git+https://github.com/adsabs/ADSMicroserviceUtils.git@v1.1.9
-flask-consulate==0.1.2
-Flask-Script==2.0.5
-Flask-Migrate==1.6.0
+git+https://github.com/adsabs/flask-watchman.git@v1.0.0
+boto==2.49.0
+boto3==1.17.10
+botocore==1.20.10
+flask-consulate==0.2.0
+flask-migrate==2.6.0
+flask-script==2.0.6
+future==0.18.2
 psycopg2==2.8.3
-git+https://github.com/jonnybazookatone/flask-watchman@7d002bbba5babc5545f682045a2574b68908d0ce
-boto3==1.1.1
-boto==2.39.0
-botocore==1.1.12
